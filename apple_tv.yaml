@@ -1,0 +1,5 @@
+# AppleTV olohuone
+- host: 192.168.30.9
+  name: Apple TV OH
+  login_id: !secret appletv_login_id
+  credentials: !secret appletv_credential
