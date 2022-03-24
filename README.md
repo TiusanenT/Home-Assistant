@@ -1,2 +1,2 @@
 # Home-Assistant
-Home Assistant configuration
+Home Assistant configuration 2022
