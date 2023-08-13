@@ -1,0 +1,138 @@
+### Feel free to try this out at your own risk. There might be something that does not work in your environment.
+### In Finland we have different prices for electricity transfer (day or night time). Normally day transfer is charged between 07:00-22:00 and night transfer is charged between 22:00-07:00
+### These automations will use some template sensors, binary_sensors and helpers:
+### input_number.day_4h_saved (limit value of 4 cheapest hours between 07-22 + higher transfer price)
+### input_number.night_4h_saved (limit value of 4 cheapest hours between 22-07 + lower transfer price)
+### input_boolean.night_or_day This helper is controlled with another automation, which will check is the night or day price including transfer price cheaper than another.
+
+### Automation to set calculated price for input_number.day_4h_saved and input_number.night_4h_saved
+- alias: Set price
+  description: >-
+    Automation to set calculated price for input_number.day_4h_saved and input_number.night_4h_saved.
+  trigger:
+    - platform: time
+      at: "21:05:00"
+  condition: []
+  action:
+    - service: input_number.set_value
+      data:
+        value: "{{ states('sensor.lowest4h_price_kk10_daytime_tomorrow') }}"
+      target:
+        entity_id: input_number.day_4h_saved
+    - service: input_number.set_value
+      data:
+        value: "{{ states('sensor.lowest4h_price_kk10_next_night') }}"
+      target:
+        entity_id: input_number.night_4h_saved
+  mode: single
+
+### Automation to set helper input_boolean.night_or_day in correct state
+
+- alias: Night or day
+  description: >-
+    Automation to set helper input_boolean.night_or_day in correct state
+  trigger:
+    - platform: time
+      at: "21:10:00"
+      id: just_a_id
+  condition: []
+  action:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id:
+                - jus_a_id
+            - condition: state
+              entity_id: binary_sensor.cheap_next_night_or_next_day
+              state: "on"
+          sequence:
+            - service: input_boolean.turn_on
+              data: {}
+              target:
+                entity_id: input_boolean.night_or_day
+        - conditions:
+            - condition: trigger
+              id:
+                - just_a_id
+            - condition: state
+              entity_id: binary_sensor.cheap_next_night_or_next_day
+              state: "off"
+          sequence:
+            - service: input_boolean.turn_off
+              data: {}
+              target:
+                entity_id: input_boolean.night_or_day
+  mode: single
+
+### Automation to choose heating time to be either next night or next day. If water heater is overided in last 3 hours it will prevent this automation to proceed
+- alias: warm water boiler Nordpool
+  description: warm water boiler Nordpool
+  trigger:
+    - platform: time_pattern
+      minutes: "0"
+      seconds: "5"
+      id: just_a_id_too
+  condition:
+    condition: template
+    value_template: "{{ now() - state_attr('automation.water_heater_override', 'last_triggered') > timedelta(hours=3) }}"
+  action:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id:
+                - just_a_id_too
+            - condition: state
+              entity_id: input_boolean.night_or_day
+              state: "on"
+          sequence:
+            - if:
+                - condition: template
+                  value_template: |
+                          {{ (states('sensor.nordpool_kwh_fi_eur_3_10_024') | float)  <=
+                          (states('input_number.night_4h_saved') | float) }} 
+                - condition: state
+                  entity_id: input_boolean.holiday_mode
+                  state: "off"
+                - condition: time
+                  after: "22:00:00"
+                  before: "07:00:00"
+              then:
+                - service: switch.turn_on
+                  data: {}
+                  target:
+                    entity_id: switch.water_heater
+              else:
+                - service: switch.turn_off
+                  data: {}
+                  target:
+                    entity_id: switch.water_heater
+        - conditions:
+            - condition: trigger
+              id:
+                - just_a_id_too
+            - condition: state
+              entity_id: input_boolean.night_or_day
+              state: "off"
+          sequence:
+            - if:
+                - condition: template
+                  value_template: |
+                          {{ (states('sensor.nordpool_kwh_fi_eur_3_10_024') | float)  <=
+                          (states('input_number.day_4h_saved') | float) }} 
+                - condition: state
+                  entity_id: input_boolean.holiday_mode
+                  state: "off"
+                - condition: time
+                  after: "07:00:00"
+                  before: "22:00:00"
+              then:
+                - service: switch.turn_on
+                  data: {}
+                  target:
+                    entity_id: switch.water_heater
+              else:
+                - service: switch.turn_off
+                  data: {}
+                  target:
+                    entity_id: switch.water_heater
+  mode: single
