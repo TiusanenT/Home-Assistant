@@ -1,0 +1,7 @@
+### Check the night and day prices
+- platform: template
+  sensors:
+    cheap_next_night_or_next_day:
+      friendly_name: "Cheap next night or next day"
+      value_template: >-
+        {{ states('sensor.next_night_prize') < states('sensor.next_day_prize') }}
