@@ -65,6 +65,7 @@
   mode: single
 
 ### Automation to choose heating time to be either next night or next day. If water heater is overided in last 3 hours it will prevent this automation to proceed
+### This automation is triggered once in a hour
 - alias: warm water boiler Nordpool
   description: warm water boiler Nordpool
   trigger:
