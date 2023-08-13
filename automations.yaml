@@ -16,12 +16,12 @@
   action:
     - service: input_number.set_value
       data:
-        value: "{{ states('sensor.lowest4h_price_kk10_daytime_tomorrow') }}"
+        value: "{{ states('sensor.lowest4h_price_daytime_tomorrow') }}"
       target:
         entity_id: input_number.day_4h_saved
     - service: input_number.set_value
       data:
-        value: "{{ states('sensor.lowest4h_price_kk10_next_night') }}"
+        value: "{{ states('sensor.lowest4h_price_next_night') }}"
       target:
         entity_id: input_number.night_4h_saved
   mode: single
