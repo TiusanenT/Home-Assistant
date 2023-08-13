@@ -1,0 +1,40 @@
+### Calculate limit value of four cheapest hours next night
+- platform: template
+  sensors:
+    lowest4h_price_next_night:
+      unit_of_measurement: 'c/kWh'
+      value_template: >
+        {%- set today  = state_attr('sensor.nordpool_kwh_fi_eur_3_10_024', 'today') | list %}
+        {%- set tomorrow  = state_attr('sensor.nordpool_kwh_fi_eur_3_10_024', 'tomorrow') | list %}
+        {%- set sorted = (today [22:] + tomorrow[:6]) | sort %}
+        {{ sorted[3] | float }}
+
+### Calculate limit value of four cheapest hours next day
+- platform: template
+  sensors:
+    lowest4h_price_daytime_tomorrow:
+      unit_of_measurement: 'c/kWh'
+      value_template: >
+        {%- set today  = state_attr('sensor.nordpool_kwh_fi_eur_3_10_024', 'today') | list %}
+        {%- set tomorrow  = state_attr('sensor.nordpool_kwh_fi_eur_3_10_024', 'tomorrow') | list %}
+        {%- set sorted = (tomorrow[7:21]) | sort %}
+        {{ sorted[3] | float }}
+
+#### Calculate limit value and add additional cost to it (transfer and tax class 1)
+- platform: template
+  sensors:
+    next_night_prize:
+      friendly_name: "Next night prize"
+      unit_of_measurement: 'c/kWh'
+      value_template: >
+        {{ states('sensor.lowest4h_price_next_night') | float(0) + 1.4 | float(0) }}
+
+
+#### Calculate limit value and add additional cost to it (transfer and tax class 1)
+- platform: template
+  sensors:
+    next_day_prize:
+      friendly_name: "Next day prize"
+      unit_of_measurement: 'c/kWh'
+      value_template: >
+        {{ states('sensor.lowest4h_price_daytime_tomorrow') | float(0) + 3.2 | float(0) }}
