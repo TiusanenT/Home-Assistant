@@ -1,7 +1,8 @@
 ### Check the night and day prices
+### If for some reason next night / day prices are not available, it will defaul to next night 1.4 c/kWh vs 3.2 c/kWh and state of this sensor will be ON
 - platform: template
   sensors:
     cheap_next_night_or_next_day:
       friendly_name: "Cheap next night or next day"
       value_template: >-
-        {{ (states('input_number.night_4h_saved') | float) <= (states('input_number.day_4h_saved') | float) }}
+        {{ (states('sensor.next_night_price') | float) <= (states('sensor.next_day_price') | float) }}
